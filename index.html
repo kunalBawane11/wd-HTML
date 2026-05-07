@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Premium Library</title>
+</head>
+
+<body>
+
+<h2>📚 Premium Library</h2>
+
+<h3>Add / Edit Book</h3>
+
+<input type="text" id="title" placeholder="Book Title">
+<input type="text" id="author" placeholder="Author Name">
+<input type="text" id="isbn" placeholder="ISBN">
+<input type="text" id="image" placeholder="Image URL">
+
+<select id="status">
+<option>Available</option>
+<option>Not Available</option>
+</select>
+
+<button onclick="addBook()">Save Book</button>
+
+<br><br>
+
+<input type="text" id="search" placeholder="Search..." onkeyup="searchBook()">
+
+<br><br>
+
+<table border="1" id="table">
+<thead>
+<tr>
+<th>Cover</th>
+<th>Title</th>
+<th>Author</th>
+<th>ISBN</th>
+<th>Status</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+
+<p>© 2026 Premium Library</p>
+
+<script>
+
+// DEFAULT BOOKS
+let defaultBooks = [
+{title:"The Midnight Library",author:"Matt Haig",isbn:"5001",image:"https://covers.openlibrary.org/b/id/10523338-L.jpg",status:"Available"},
+{title:"The Silent Patient",author:"Alex Michaelides",isbn:"5002",image:"https://covers.openlibrary.org/b/id/9259256-L.jpg",status:"Available"},
+{title:"It Ends With Us",author:"Colleen Hoover",isbn:"5003",image:"https://covers.openlibrary.org/b/id/8370226-L.jpg",status:"Available"},
+{title:"Verity",author:"Colleen Hoover",isbn:"5004",image:"https://covers.openlibrary.org/b/id/10958376-L.jpg",status:"Available"},
+{title:"Deep Work",author:"Cal Newport",isbn:"5007",image:"https://covers.openlibrary.org/b/id/9252001-L.jpg",status:"Available"}
+];
+
+// SAFE LOAD FROM LOCALSTORAGE
+let books = JSON.parse(localStorage.getItem("books"));
+
+if (!books || books.length === 0) {
+    books = defaultBooks;
+}
+
+let editIndex = -1;
+
+// DISPLAY BOOKS
+function displayBooks() {
+let tbody = document.querySelector("#table tbody");
+tbody.innerHTML = "";
+
+books.forEach((book, index) => {
+tbody.innerHTML += `
+<tr onclick="openBook('${book.link || ''}')">
+<td><img src="${book.image || 'https://via.placeholder.com/50x70'}" width="50" height="70"></td>
+<td>${book.title}</td>
+<td>${book.author}</td>
+<td>${book.isbn}</td>
+<td>${book.status}</td>
+<td onclick="event.stopPropagation()">
+<button onclick="editBook(${index})">Edit</button>
+<button onclick="deleteBook(${index})">Delete</button>
+</td>
+</tr>`;
+});
+}
+
+// OPEN BOOK LINK (SAFE)
+function openBook(link) {
+if (link && link !== "") {
+    window.open(link, "_blank");
+}
+}
+
+// ADD / UPDATE BOOK
+function addBook() {
+
+let title = document.getElementById("title").value.trim();
+let author = document.getElementById("author").value.trim();
+let isbn = document.getElementById("isbn").value.trim();
+let image = document.getElementById("image").value.trim();
+let status = document.getElementById("status").value;
+
+if (!title || !author || !isbn) {
+    alert("Fill all fields!");
+    return;
+}
+
+// AUTO GENERATE LINK
+let link = "https://www.google.com/search?q=" + title.replace(/ /g, "+") + "+book";
+
+// DUPLICATE CHECK
+let duplicate = books.some((b, i) => b.isbn === isbn && i !== editIndex);
+if (duplicate) {
+    alert("ISBN already exists!");
+    return;
+}
+
+let book = {
+title,
+author,
+isbn,
+image: image || "https://via.placeholder.com/50x70",
+status,
+link
+};
+
+if (editIndex === -1) {
+    books.push(book);
+} else {
+    books[editIndex] = book;
+    editIndex = -1;
+}
+
+localStorage.setItem("books", JSON.stringify(books));
+clearForm();
+displayBooks();
+}
+
+// EDIT BOOK
+function editBook(index) {
+let b = books[index];
+
+document.getElementById("title").value = b.title;
+document.getElementById("author").value = b.author;
+document.getElementById("isbn").value = b.isbn;
+document.getElementById("image").value = b.image;
+document.getElementById("status").value = b.status;
+
+editIndex = index;
+}
+
+// DELETE BOOK
+function deleteBook(index) {
+books.splice(index, 1);
+localStorage.setItem("books", JSON.stringify(books));
+displayBooks();
+}
+
+// CLEAR FORM
+function clearForm() {
+document.getElementById("title").value = "";
+document.getElementById("author").value = "";
+document.getElementById("isbn").value = "";
+document.getElementById("image").value = "";
+}
+
+// SEARCH
+function searchBook() {
+let input = document.getElementById("search").value.toLowerCase();
+let rows = document.querySelectorAll("#table tbody tr");
+
+rows.forEach(row => {
+row.style.display = row.innerText.toLowerCase().includes(input) ? "" : "none";
+});
+}
+
+// INITIAL LOAD
+displayBooks();
+
+</script>
+
+</body>
+</html>
